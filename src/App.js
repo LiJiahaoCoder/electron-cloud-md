@@ -132,6 +132,17 @@ function App() {
       setUnsavedFileIDs(unsavedFileIDs.filter(id => id !== activeFile.id));
     });
   };
+  const importFiles = () => {
+    remote.dialog.showOpenDialog({
+      title: '选择导入的 Markdown 文件',
+      properties: ['openFile', 'multiSelections'],
+      filters: [
+        { name: 'Markdown files', extensions: ['md'] },
+      ],
+    }).then(res => {
+      console.info(res.filePaths);
+    });
+  };
 
   const filesListArr = searchedFiles.length > 0 ? searchedFiles : filesArr;
 
@@ -163,6 +174,7 @@ function App() {
                 text="导入"
                 colorClass="btn-success"
                 icon={ faFileImport }
+                onBtnClick={ importFiles }
               />
             </div>
           </div>
