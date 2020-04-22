@@ -4,6 +4,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrash, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faMarkdown } from '@fortawesome/free-brands-svg-icons';
 import useKeyPress from '../../hooks/useKeyPress';
+import useContextMenu from '../../hooks/useContextMenu';
+import { getParentNode } from '../../utils/helper';
 
 const { remote } = window.require('electron');
 const { Menu, MenuItem } = remote;
@@ -17,7 +19,7 @@ const FileList = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
     setEditStatus(false);
     setValue('');
 
-    if (editItem) {
+    if (!editItem) {
       onFileDelete(editItem.id);
     }
   }
@@ -31,29 +33,36 @@ const FileList = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
     }
   }, [files]);
 
-  useEffect(() => {
-    const menu = new Menu();
-    menu.append(new MenuItem({
+  const clickedItem = useContextMenu([
+    {
       label: 'Open',
-      click: () => { console.info('Opening'); },
-    }));
-    menu.append(new MenuItem({
+      click: () => {
+        const parentElement = getParentNode(clickedItem.current, 'file-item');
+        if (parentElement) {
+          onFileClick(parentElement.dataset.id);
+        }
+      },
+    },
+    {
       label: 'Rename',
-      click: () => { console.info('Renaming'); },
-    }));
-    menu.append(new MenuItem({
+      click: () => {
+        const parentElement = getParentNode(clickedItem.current, 'file-item');
+        if (parentElement) {
+          setEditStatus(parentElement.dataset.id);
+          setValue(parentElement.dataset.title);
+        }
+      },
+    },
+    {
       label: 'Delete',
-      click: () => { console.info('Deleting'); },
-    }));
-    const handleContextMenu = (e) => {
-      menu.popup({ window: remote.getCurrentWindow() });
-    };
-    window.addEventListener('contextmenu', handleContextMenu);
-
-    return () => {
-      window.removeEventListener('contextmenu', handleContextMenu);
-    };
-  });
+      click: () => {
+        const parentElement = getParentNode(clickedItem.current, 'file-item');
+        if (parentElement) {
+          onFileDelete(parentElement.dataset.id);
+        }
+      },
+    },
+  ], '.file-list');
 
   useEffect(() => {
     const editItem = files.find(file => file.id === editStatus);
@@ -67,12 +76,14 @@ const FileList = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
       closeSearch(editItem);
     }
   });
-  
+
   return <ul className="list-group list-group-flush file-list">
     {
       files.map(file => 
         <li
           key={file.id}
+          data-id={file.id}
+          data-title={file.title}
           className="row list-group-item bg-light d-flex align-items-center file-item mx-0"
         >
           {

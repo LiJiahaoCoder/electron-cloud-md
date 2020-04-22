@@ -96,7 +96,7 @@ function App() {
     }
   };
   const updateFilename = (fileID, title, isNew) => {
-    const newPath = isNew ? join(savedLocation, `${title}.md`) : join(dirname[files[fileID].path], `${title}.md`);
+    const newPath = isNew ? join(savedLocation, `${title}.md`) : join(dirname(files[fileID].path), `${title}.md`);
     const modifiedFile = { ...files[fileID], title, isNew: false, path: newPath };
     const newFiles = { ...files, [fileID]: modifiedFile };
 
