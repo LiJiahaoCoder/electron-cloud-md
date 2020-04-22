@@ -14,7 +14,7 @@ import 'easymde/dist/easymde.min.css';
 import './App.css';
 
 // require node.js modules
-const { join } = window.require('path');
+const { join, basename, extname, dirname } = window.require('path');
 const { remote } = window.require('electron');
 const Store = window.require('electron-store');
 
@@ -96,7 +96,7 @@ function App() {
     }
   };
   const updateFilename = (fileID, title, isNew) => {
-    const newPath = join(savedLocation, `${title}.md`);
+    const newPath = isNew ? join(savedLocation, `${title}.md`) : join(dirname[files[fileID].path], `${title}.md`);
     const modifiedFile = { ...files[fileID], title, isNew: false, path: newPath };
     const newFiles = { ...files, [fileID]: modifiedFile };
 
@@ -128,7 +128,7 @@ function App() {
     });
   };
   const saveCurrenFile = () => {
-    fileHelper.writeFile(join(savedLocation, `${activeFile.title}.md`), activeFile.body).then(() => {
+    fileHelper.writeFile(activeFile.path, activeFile.body).then(() => {
       setUnsavedFileIDs(unsavedFileIDs.filter(id => id !== activeFile.id));
     });
   };
@@ -140,7 +140,32 @@ function App() {
         { name: 'Markdown files', extensions: ['md'] },
       ],
     }).then(res => {
-      console.info(res.filePaths);
+      const { filePaths } = res;
+      if (Array.isArray(filePaths)) {
+        const filteredPaths = filePaths.filter(path => {
+          const existed = Object.values(files).find(file => file.path === path);
+
+          return !existed;
+        });
+
+        const importFilesArr = filteredPaths.map(path => ({
+          id: uuid(),
+          title: basename(path, extname(path)),
+          path,
+        }));
+
+        const newFiles = { ...files, ...flattenArr(importFilesArr) };
+        setFiles(newFiles);
+        saveFilesToStore(newFiles);
+
+        if (importFilesArr.length > 0) {
+          remote.dialog.showMessageBox({
+            type: 'info',
+            title: '导入成功',
+            message: `成功导入${importFilesArr.length}个文件`,
+          });
+        }
+      }
     });
   };
 
