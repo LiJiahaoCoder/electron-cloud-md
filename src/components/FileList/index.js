@@ -5,6 +5,9 @@ import { faEdit, faTrash, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faMarkdown } from '@fortawesome/free-brands-svg-icons';
 import useKeyPress from '../../hooks/useKeyPress';
 
+const { remote } = window.require('electron');
+const { Menu, MenuItem } = remote;
+
 const FileList = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
   const [editStatus, setEditStatus] = useState(false);
   const [value, setValue] = useState(null);
@@ -27,6 +30,30 @@ const FileList = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
       setValue(newFile.title);
     }
   }, [files]);
+
+  useEffect(() => {
+    const menu = new Menu();
+    menu.append(new MenuItem({
+      label: 'Open',
+      click: () => { console.info('Opening'); },
+    }));
+    menu.append(new MenuItem({
+      label: 'Rename',
+      click: () => { console.info('Renaming'); },
+    }));
+    menu.append(new MenuItem({
+      label: 'Delete',
+      click: () => { console.info('Deleting'); },
+    }));
+    const handleContextMenu = (e) => {
+      menu.popup({ window: remote.getCurrentWindow() });
+    };
+    window.addEventListener('contextmenu', handleContextMenu);
+
+    return () => {
+      window.removeEventListener('contextmenu', handleContextMenu);
+    };
+  });
 
   useEffect(() => {
     const editItem = files.find(file => file.id === editStatus);
