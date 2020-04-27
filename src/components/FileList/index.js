@@ -19,7 +19,7 @@ const FileList = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
     setEditStatus(false);
     setValue('');
 
-    if (!editItem) {
+    if (!editItem.title) {
       onFileDelete(editItem.id);
     }
   }

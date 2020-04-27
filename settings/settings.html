@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings</title>
+  <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css">
+</head>
+<body class="p-2">
+  <h5>Settings</h5>
+  <form id="settings-form">
+    <div class="form-group my-2">
+      <label for="save-file-location">Select the path to store files</label>
+      <div class="input-group-append">
+        <input type="text" class="form-control" name="save-file-location" id="save-file-location" readonly/>
+        <div class="input-group-append">
+          <button class="btn btn-outline-primary" type="button" id="select-new-location">Select</button>
+        </div>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary my-2" id="save">Save</button>
+  </form>
+
+  <script>
+    require('./settings.js');
+  </script>
+</body>
+</html>
