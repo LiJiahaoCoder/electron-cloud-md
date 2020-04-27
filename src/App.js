@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SimpleMDE from 'react-simplemde-editor';
 import { faPlus, faFileImport, faSave } from '@fortawesome/free-solid-svg-icons';
 import uuid from 'uuid/v4';
@@ -8,6 +8,7 @@ import BottomButton from './components/BottomButton';
 import TabList from './components/TabList';
 import { flattenArr, obj2Arr } from './utils/helper';
 import fileHelper from './utils/fileHelper';
+import useIpcRenderer from './hooks/useIpcRenderer';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'easymde/dist/easymde.min.css';
@@ -19,6 +20,7 @@ const { remote } = window.require('electron');
 const Store = window.require('electron-store');
 
 const fileStore = new Store({'name': 'Files Data'});
+const settingsStore = new Store({ name: 'Settings' });
 const saveFilesToStore = (files) => {
   const filesStoreObj = obj2Arr(files).reduce((acc, cur)=> {
     const { id, path, title, createdAt } = cur;
@@ -46,7 +48,7 @@ function App() {
   });
   const activeFile = files[activeFileID];
   const filesArr = obj2Arr(files);
-  const savedLocation = remote.app.getPath('documents');
+  const savedLocation = settingsStore.get('savedFileLocation') || remote.app.getPath('documents');
 
   const fileSearch = (keywords) => {
     const newFiles = filesArr.filter(file => file.title.includes(keywords));
@@ -75,12 +77,13 @@ function App() {
     setActiveFileID(leftFileIDs[0] || '');
   };
   const fileChange = (fileID, value) => {
-    const newFile = { ...files[fileID], body
-    : value };
-    setFiles({ ...files, [fileID]: newFile });
+    if (value !== files[fileID].body) {
+      const newFile = { ...files[fileID], body: value };
+        setFiles({ ...files, [fileID]: newFile });
 
-    if (!unsavedFileIDs.includes(fileID)) {
-      setUnsavedFileIDs([...unsavedFileIDs, fileID]);
+        if (!unsavedFileIDs.includes(fileID)) {
+          setUnsavedFileIDs([...unsavedFileIDs, fileID]);
+        }
     }
   };
   const deleteFile = (fileID) => {
@@ -171,6 +174,12 @@ function App() {
 
   const filesListArr = searchedFiles.length > 0 ? searchedFiles : filesArr;
 
+  useIpcRenderer({
+    'create-file': createFile,
+    'import-file': importFiles,
+    'save-file': saveCurrenFile,
+  });
+
   return (
     <div className="App contianer-fluid px-0">
       <div className="row no-gutters">
@@ -225,12 +234,6 @@ function App() {
               options={{
                 minHeight: '800px'
               }}
-            />
-            <BottomButton
-              text="保存"
-              colorClass="btn-success"
-              icon={ faSave }
-              onBtnClick={ saveCurrenFile }
             />
           </>
         }
